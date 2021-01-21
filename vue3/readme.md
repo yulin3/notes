@@ -1,28 +1,28 @@
 # [Vue3](https://github.com/vuejs/vue-next "Vue3")响应式原理分析
-Vue的一个特点就是数据响应式，通过侦测数据的变化，来驱动更新视图
+Vue的一个核心就是数据响应式，通过侦测数据的变化，来驱动更新视图
 
 ## 前言
 ### Vue2 响应式实现方式
-遍历对象所有属性并使用 Object.defineProperty 重新定义getter/setter进行劫持
-需要对 Object 和 Array 两种类型采用不同的处理方式
-Object 类型需要递归侦测对象所有的 key，来实现深度的侦测
-而为了感知 Array 的变化，则是对 Array 原型上几个改变数组自身的方法做了拦截
-缺点:
-1.无法监听对象以及数组动态添加的属性
-2.实现不够方便
-3.性能问题
+遍历对象所有属性并使用 Object.defineProperty 重新定义getter/setter进行劫持  
+需要对 Object 和 Array 两种类型采用不同的处理方式  
+Object 类型需要递归侦测对象所有的 key，来实现深度的侦测  
+而为了感知 Array 的变化，则是对 Array 原型上几个改变数组自身的方法做了拦截  
+
+缺点:  
+* 无法监听对象以及数组动态添加的属性
+* 实现不够方便
+* 性能问题
 
 ### Vue3 响应式实现方式
-使用es6 API Proxy
-相比旧的 defineProperty API ，Proxy 可以代理数组，并且 API 提供了多个 traps(捕获器)
-今天主要講怎么使用proxy实现响应式对象
+使用es6 API Proxy  
+相比旧的 defineProperty API ，Proxy 可以代理数组，并且 API 提供了多个 traps(捕获器)  
+今天主要講怎么使用proxy实现响应式对象  
 
 ## [Proxy](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Proxy "Proxy")
-### Proxy 对象用于创建一个对象的代理，从而实现基本操作的拦截和自定义
-代理很好理解 就像科学上网一样，就是包了一层，你可以为所欲为
-首先proxy实现响应式对象 在对比Vue3在做法
+### Proxy 用于创建一个对象的代理，从而实现基本操作的拦截和自定义
+代理很好理解，就像科学上网一样，中間包了一层，你可以为所欲为
 
-## 细节一：默认行为
+### Proxy 细节一：默认行为
 ```javaScript
 let o = { handsome: 'gong' }
 let p = new Proxy(o, {
@@ -55,12 +55,11 @@ let p = new Proxy(handsome, {
 })
 
 p.push('yuanqi') // VM438:12 Uncaught TypeError: 'set' on proxy: trap returned falsish for property '2'
-
-// push 操作，并不只是操作当前数据，push 操作还触发数组本身其他属性更改 导致set不能正常获取返回值
 ```
+push 操作，并不只是操作当前数据，push 操作还触发数组本身其他属性更改 导致set不能正常获取返回值
 
 ## [Reflect](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Reflect "Reflect")
-是一个内置的对象，它提供拦截 JavaScript 操作的方法
+是一个内置的对象，它提供拦截 JavaScript 操作的方法  
 通過 Reflect 規範默認行為
 
 ```javaScript
@@ -78,11 +77,10 @@ let p = new Proxy(handsome, {
 })
 
 p.push('yuanqi')
-
-// 相比自己处理 set 的默认行为，Reflect 则更方便优雅
 ```
+相比自己处理 set 的默认行为，Reflect 则更方便优雅
 
-## 细节二：多次触发 set/get
+### Proxy 细节二：多次触发 set/get
 当代理对象是数组时，数组操作会触发多次 set 执行，同时也引发 get 操作
 
 ```javaScript
@@ -103,7 +101,7 @@ p.push('yuanqi')
 ```
 假设set 中的 console 是触发外界渲染的 render 函数，那么 push 操作会引发多次 render 
 
-## 细节三：只能代理一层
+### Proxy 细节三：只能代理一层
 ```javaScript
 let handsome = { product: 'hao', yu: ['sugar'], fe: {big: 'gong', small: 'li'} }
 let p = new Proxy(handsome, {
@@ -133,6 +131,7 @@ p.fe.small = 'yuanqi'
 2. proxy 对象只能代理一层
 先自己尝试解决这些问题，再對比 Vue3 的解决方式
 
+### setTimeout ，类似于 debounce 的操作，解决多次执行
 ```javaScript
 function reactive(data, cb) {
   let timer = null
@@ -162,9 +161,8 @@ let p = reactive(handsome, () => {
 p.push('yuanqi')
 // trigger
 ```
-这里使用了定时器 setTimeout ，类似于 debounce 的操作，解决重复的問題
 
-递归解决数据深度侦测
+### 递归解决数据深度侦测
 ```javaScript
 function reactive(data, cb) {
   let o = null
@@ -205,10 +203,10 @@ p.yu.push('honey')
 p.fe.small = 'yuanqi'
 // trigger
 ```
-对象进行遍历，对每个 key 都做一次 proxy
-输出代理后的对象 p 可以看到深度代理后的对象，都携带 proxy 的标志
+对象进行遍历，对每个 key 都做一次 proxy  
+输出代理后的对象 p 可以看到深度代理后的对象，都携带 proxy 的标志  
 
-虽然这些处理方式可以解决问题，但并不够优雅，尤其是递归 proxy 是一个性能隐患，并且有些数据并非需要侦测
+虽然这些处理方式可以解决问题，但并不够优雅，尤其是递归 proxy 是一个性能隐患，并且有些数据并非需要侦测  
 接下来我们就看下 Vue3 是如何使用 Proxy 实现数据侦测的
 
 ## [WeakMap](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/WeakMap "WeakMap")
@@ -229,10 +227,9 @@ let p = new Proxy(data, {
   }
 })
 
-p.a
-// {b: {c: 1} }
-// 当代理的对象是多层结构时，Reflect.get 会返回对象的内层结构
+p.a // {b: {c: 1} }
 ```
+当代理的对象是多层结构时，Reflect.get 会返回对象的内层结构
 
 ## 问题一：如何避免多次 trigger
 ```javaScript
@@ -261,8 +258,7 @@ function set(target, key, val, receiver) {
 通过 判断 key 是否为 target 自身属性，以及设置val是否跟target[key]相等 
 可以确定 trigger 的类型，并且避免多余的 trigger
 
-## 问题二 深度侦测数据是通过 createGetter 函数实现的，前面提到，当对多层级的对象操作时，set 并不能感知到，但是 get 会触发，利用 Reflect.get() 返回的“多层级对象中内层” ，再对“内层数据”做一次代理
-
+## 问题二：深度侦测数据
 ```javaScript
 function createGetter() {
   return function get(target, key, receiver) {
@@ -271,10 +267,10 @@ function createGetter() {
   }
 }
 ```
-判断 Reflect 返回的数据是对象，则再走一次 proxy ，从而获得了对对象内部的侦测(get時機才代理,一開始仅仅是代理外层对象)
-每一次的 proxy 数据，都会保存在 Map 中，访问时会直接从中查找，从而提高性能
-
+利用 Reflect.get() 返回的“多层级对象中内层” ，再对“内层数据”做一次代理  
+判断 Reflect 返回的数据是对象，则再走一次 proxy ，从而获得了对对象内部的侦测  
+每一次的 proxy 数据，都会保存在 Map 中，访问时会直接从中查找，从而提高性能  
 
 总结
-Vue3是如何侦测数据的
+Vue3是如何侦测数据的  
 <!-- Vue3 并非简单的通过 Proxy 来递归侦测数据， 而是通过 get 操作来实现内部数据的代理（时机合理），并且结合 WeakMap 来对数据保存，这将大大提高响应式数据的性能 -->
