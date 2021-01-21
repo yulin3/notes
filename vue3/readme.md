@@ -16,7 +16,7 @@ Object 类型需要递归侦测对象所有的 key，来实现深度的侦测
 ### Vue3 响应式实现方式
 使用es6 API Proxy  
 相比 defineProperty API ，Proxy 可以代理数组，并且 API 提供了多个 traps(捕获器)  
-今天主要講怎么使用proxy实现响应式对象  
+响应式原理内容较多，今天主要講怎么使用proxy实现数据侦测  
 
 ## [Proxy](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Proxy "Proxy")
 ### Proxy 用于创建一个对象的代理，从而实现基本操作的拦截和自定义
