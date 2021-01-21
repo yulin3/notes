@@ -8,14 +8,14 @@ Vue的一个核心就是数据响应式，通过侦测数据的变化，来驱�
 Object 类型需要递归侦测对象所有的 key，来实现深度的侦测  
 而为了感知 Array 的变化，则是对 Array 原型上几个改变数组自身的方法做了拦截  
 
-缺点:  
+### 缺点:  
 * 无法监听对象以及数组动态添加的属性
 * 实现不够方便
 * 性能问题
 
 ### Vue3 响应式实现方式
 使用es6 API Proxy  
-相比旧的 defineProperty API ，Proxy 可以代理数组，并且 API 提供了多个 traps(捕获器)  
+相比 defineProperty API ，Proxy 可以代理数组，并且 API 提供了多个 traps(捕获器)  
 今天主要講怎么使用proxy实现响应式对象  
 
 ## [Proxy](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Proxy "Proxy")
@@ -122,7 +122,7 @@ p.fe.small = 'yuanqi'
 // get value: yu
 // get value: fe
 ```
-可以看到并没有触发 set 的，反而是触发了 get ，因为 set 的过程中访问了 yu 这个属性
+可以看到并没有触发 set 的，反而是触发了 get ，因为 set 的过程中访问了 yu 这个属性  
 由此可见，proxy 代理的对象只能代理到第一层，而对象内部的深度侦测，需要另行实现
 
 
@@ -212,6 +212,7 @@ p.fe.small = 'yuanqi'
 ## [WeakMap](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/WeakMap "WeakMap")
 原生的 WeakMap 持有的是每个键对象的“弱引用”，这意味着在没有其他引用存在时垃圾回收能正确进行
 
+## [Reflect](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Reflect "Reflect") get
 ```javaScript
 let data = { a: { b: { c: 1 } } }
 let p = new Proxy(data, {
@@ -271,6 +272,6 @@ function createGetter() {
 判断 Reflect 返回的数据是对象，则再走一次 proxy ，从而获得了对对象内部的侦测  
 每一次的 proxy 数据，都会保存在 Map 中，访问时会直接从中查找，从而提高性能  
 
-总结
+## 总结
 Vue3是如何侦测数据的  
 <!-- Vue3 并非简单的通过 Proxy 来递归侦测数据， 而是通过 get 操作来实现内部数据的代理（时机合理），并且结合 WeakMap 来对数据保存，这将大大提高响应式数据的性能 -->
