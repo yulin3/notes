@@ -73,7 +73,7 @@ const offset = ele => {
    }
 }
 ```
-<!-- node.ownerDocument.documentElement 的用法可能大家比较陌生，ownerDocument 是 DOM 节点的一个属性，它返回当前节点的顶层的 document 对象。ownerDocument 是文档，documentElement 是根节点 -->
+ownerDocument 是 DOM 节点的一个属性，它返回当前节点的顶层的 document 对象
 
 ### compose 
 * compose 的参数是函数数组，返回的也是一个函数
